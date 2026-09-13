@@ -1,157 +1,196 @@
-# Player Leaderboard - Sprint 2 (API)
+# Game Score Manager — SPPR SD24
 
-Sprint 1 was een consoleprogramma (`main.py`) waarmee je spelers en scores
-kon beheren via een menu in de terminal. In Sprint 2 ontsluiten we diezelfde
-data via een **web-API** met FastAPI, zodat andere programma's (of een
-frontend) de spelersdata kunnen opvragen via HTTP.
+Python-consoleapp en FastAPI REST API voor spelers, scores en een leaderboard.
+Uitgewerkt volgens sprint 1 t/m 4 van het [Trello-bord](https://trello.com/b/IEi2Nb14/sppr-fd-sd24).
+De API en het consolemenu delen een SQLite-database via SQLAlchemy.
 
-## Onderzoek: wat is FastAPI?
+## Starten
 
-FastAPI is een modern Python-framework voor het bouwen van web-API's.
-Een paar kernpunten:
+Vereist: Python 3.10 of nieuwer; getest op Windows met Python 3.14.
+Open een terminal in deze projectmap en voer uit:
 
-- Je definieert endpoints (URL's) als gewone Python-functies met een
-  decorator zoals `@app.get("/players")`.
-- FastAPI genereert automatisch **interactieve documentatie** (Swagger UI
-  op `/docs`), waarmee je endpoints direct in de browser kunt uittesten.
-- Het valideert automatisch inputs op basis van type hints (bijvoorbeeld
-  `player_id: int` zorgt dat FastAPI een fout teruggeeft als iemand geen
-  geldig getal meegeeft).
-- Het is snel, omdat het gebruikmaakt van `async`/`await` en de Starlette-
-  en Pydantic-bibliotheken onder de motorkap.
-
-Je gebruikt FastAPI wanneer je data of functionaliteit uit een Python-
-programma beschikbaar wilt maken via internet of een netwerk - bijvoorbeeld
-zodat een website, mobiele app of ander programma jouw spelersdata kan
-opvragen zonder dat het zelf toegang hoeft te hebben tot `players.json`.
-
-## Onderzoek: HTTP requests, responses en statuscodes
-
-- Een **request** is het verzoek dat een client (bijv. je browser) naar de
-  server stuurt. Bij een GET-request vraag je data op, zonder dat er iets
-  wijzigt op de server.
-- Een **response** is het antwoord dat de server terugstuurt: meestal data
-  (hier in JSON-formaat) plus een statuscode.
-- Een **statuscode** vertelt of het verzoek gelukt is en zo niet, waarom
-  niet. Belangrijke codes in dit project:
-  - `200 OK` - het verzoek is gelukt, de gevraagde data komt terug.
-  - `404 Not Found` - de gevraagde resource (bijv. een speler-ID) bestaat
-    niet.
-  - `422 Unprocessable Entity` - FastAPI geeft dit automatisch terug als
-    de input niet aan het verwachte type voldoet (bijv. tekst in plaats
-    van een getal bij `/players/{id}`).
-
-## Project structuur
-
-```
-.
-├── main.py           # Sprint 1: consoleprogramma + databeheer-functies
-├── api.py            # Sprint 2: FastAPI-app met de endpoints
-├── run.py            # Eén-commando starter (installeert + start de server)
-├── players.json       # Databron (gedeeld door main.py en api.py)
-├── requirements.txt  # Python-dependencies
-└── README.md
-```
-
-`api.py` hergebruikt de `load_players()`-functie uit `main.py`, zodat er
-geen dubbele logica ontstaat en beide programma's dezelfde `players.json`
-als bron gebruiken.
-
-## Snel starten (één commando)
-
-Open een terminal in deze map en voer uit:
-
-```bash
+```powershell
 python run.py
 ```
 
-Dit installeert automatisch `fastapi` en `uvicorn` (als ze nog niet
-aanwezig zijn) en start daarna de server. De API is bereikbaar via
-`http://127.0.0.1:8000` en Swagger UI via `http://127.0.0.1:8000/docs`.
+De starter gebruikt een eigen `.venv`, installeert ontbrekende pakketten en start op:
 
-Op sommige systemen gebruik je `python3 run.py` in plaats van `python run.py`.
+- API: http://127.0.0.1:8000
+- Interactieve Swagger-documentatie: http://127.0.0.1:8000/docs
+- Leaderboard als JSON: http://127.0.0.1:8000/leaderboard
 
-### Handmatig (alternatief)
+Afsluiten met Ctrl+C. Voor automatisch herladen: `python run.py --reload`.
+Is poort 8000 bezet, gebruik dan `python run.py --port 8001`.
+Je kunt ook dubbelklikken op `Start-API.cmd`.
 
-Wil je het liever los doen:
+Voor het consolemenu, na installatie van de dependencies:
 
-```bash
-pip install -r requirements.txt
-uvicorn api:app --reload
+```powershell
+.\.venv\Scripts\python.exe main.py
 ```
 
-- `api` = bestandsnaam (`api.py`)
-- `app` = de naam van de FastAPI-instantie in dat bestand
-- `--reload` = herstart de server automatisch bij codewijzigingen (handig
-  tijdens ontwikkelen)
+Handmatige installatie, bijvoorbeeld na het klonen van GitHub:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe run.py
+```
+
+Op Linux/macOS is de interpreter `.venv/bin/python`.
+
+## Wat kun je ermee?
+
+- Spelers toevoegen, bekijken, op id opvragen, hernoemen en verwijderen.
+- In het consolemenu ook zoeken op username.
+- Scores toevoegen, bekijken, corrigeren en verwijderen.
+- Een leaderboard bekijken, van hoogste naar laagste actuele score.
+- Gegevens behouden na afsluiten en opnieuw starten.
+
+De **laatst toegevoegde score** is de actuele score van een speler. Een nieuwe
+score vervangt de actuele waarde, maar bewaart de eerdere registraties.
+Een score van 100 gevolgd door 40 geeft dus 40 op het leaderboard. Dit behoudt
+het gedrag van 'score aanpassen' uit sprint 1. Zonder registraties is de score 0.
+Bij gelijke scores sorteert het leaderboard op speler-id.
 
 ## Endpoints
 
-| Methode | Endpoint         | Beschrijving                                      |
-|---------|------------------|----------------------------------------------------|
-| GET     | `/`              | Test-endpoint, controleert of de API draait        |
-| GET     | `/players`       | Geeft alle spelers terug als JSON                   |
-| GET     | `/players/{id}`  | Geeft één specifieke speler terug (404 als die niet bestaat) |
-| GET     | `/leaderboard`   | Geeft spelers terug gesorteerd van hoogste naar laagste score |
+| Methode | Endpoint | Actie | Succes |
+|---|---|---|---|
+| GET | `/` | Status van de API | 200 |
+| GET | `/players` | Alle spelers | 200 |
+| POST | `/players` | Nieuwe speler | 201 |
+| GET | `/players/{player_id}` | Eén speler | 200 |
+| PUT | `/players/{player_id}` | Naam én actuele score vervangen | 200 |
+| PATCH | `/players/{player_id}` | Meegegeven velden wijzigen | 200 |
+| DELETE | `/players/{player_id}` | Speler inclusief scores verwijderen | 204 |
+| GET | `/leaderboard` | Gesorteerde spelers | 200 |
+| GET | `/players/{player_id}/scores` | Scoregeschiedenis van een speler | 200 |
+| POST | `/players/{player_id}/scores` | Nieuwe scoreregistratie | 201 |
+| GET | `/scores` | Alle scoreregistraties | 200 |
+| GET | `/scores/{score_id}` | Eén scoreregistratie | 200 |
+| PATCH | `/scores/{score_id}` | Scoreregistratie corrigeren | 200 |
+| DELETE | `/scores/{score_id}` | Scoreregistratie verwijderen | 204 |
 
-## Testen via Swagger UI
+Een Player-response bevat `id`, `username`, `score`. Een Score-response bevat
+`id`, `player_id`, `score`. De score-id en speler-id zijn verschillende sleutels.
+POST geeft een `Location`-header met het pad naar het aangemaakte record.
 
-FastAPI genereert automatisch een interactieve testomgeving. Start de
-server en ga naar:
+Validatie: namen worden getrimd, zijn 1–50 tekens en zijn uniek zonder
+hoofdletterverschil. Scores zijn gehele getallen van 0 t/m 2147483647;
+booleans, strings, kommagetallen, null en onbekende velden worden geweigerd.
+PATCH laat ontbrekende velden met rust; PUT verwacht zowel username als score.
 
+| Foutcode | Betekenis |
+|---|---|
+| 400 | Lege PATCH: geen velden om te wijzigen |
+| 404 | Speler of score bestaat niet |
+| 409 | Username bestaat al |
+| 422 | Ongeldige invoer, ontbrekend verplicht veld of ongeldig id |
+
+## Proberen met Swagger
+
+Open `/docs`, klap een endpoint open, klik **Try it out**, vul de gegevens in en
+klik **Execute**. Onder **Server response** staat de echte statuscode en JSON.
+
+1. POST `/players` met `{"username":"MijnSpeler","score":100}`. Onthoud het teruggegeven id.
+2. GET `/players` en GET `/players/{player_id}` met dat id.
+3. PATCH de speler met `{"score":150}`. De username blijft gelijk.
+4. PUT de speler met `{"username":"NieuweNaam","score":200}`.
+5. POST `/players/{player_id}/scores` met `{"score":300}`. Onthoud de score-id.
+6. GET de scoregeschiedenis, `/scores`, één score en `/leaderboard`.
+7. PATCH `/scores/{score_id}` met `{"score":250}` om een registratie te corrigeren.
+8. Stop en herstart de API. Vraag dezelfde speler opnieuw op: die staat er nog.
+9. DELETE de testscore, daarna de testspeler. Beide antwoorden met 204 zonder body.
+10. GET de verwijderde speler: 404. Probeer een negatieve score: 422. Probeer een
+    bestaande naam met andere hoofdletters: 409.
+
+Gebruik hiervoor een eigen testspeler. De wijzigingsendpoints passen de database echt aan.
+
+## Bestanden en database
+
+| Bestand | Verantwoordelijkheid |
+|---|---|
+| `main.py` | Consolemenu, invoer en foutmeldingen |
+| `api.py` | HTTP-endpoints, statuscodes, Swagger en sessie per request |
+| `schemas.py` | Pydantic-modellen voor invoer en uitvoer |
+| `models.py` | SQLAlchemy-classes Player en Score met hun relatie |
+| `service.py` | CRUD-logica die console en API delen |
+| `database.py` | SQLite-verbinding, tabellen en JSON-import |
+| `players.json` | Bestaande spelers als eenmalige importbron |
+| `players.db` | Actuele gegevens; lokaal en genegeerd door Git |
+| `ONTWERP.md` | Endpointkeuzes en databaseontwerp |
+| `tests/test_api.py` | Automatische functionele tests |
+| `TESTVERSLAG.md` | Uitgevoerde controles en koppeling aan de sprints |
+
+Bij de eerste start worden de vier bestaande spelers geïmporteerd, inclusief
+hun ids en scores. Het JSON-bestand blijft ongewijzigd. Daarna wordt uitsluitend
+de database gebruikt; latere JSON-wijzigingen worden niet opnieuw geïmporteerd.
+Ook na het verwijderen van alle spelers vindt geen herimport plaats.
+Een ongeldig importbestand stopt de import zonder gedeeltelijke records op te slaan.
+
+De standaarddatabase staat altijd naast de code, onafhankelijk van de werkmap.
+Voor een aparte oefendatabase kun je vóór het starten instellen:
+
+```powershell
+$env:PLAYER_DATABASE = "$env:TEMP\player-oefenen.db"
+python run.py --port 8001
 ```
-http://127.0.0.1:8000/docs
+
+Voor een back-up: stop console en API en kopieer `players.db` naar een veilige map.
+
+## Uitleg voor de sprints
+
+Een **client** (Swagger, een game of een andere applicatie) stuurt een HTTP-request
+naar de **server** (FastAPI). De server antwoordt met een statuscode en meestal JSON.
+REST organiseert endpoints rond resources: hier players en scores. CRUD staat voor
+Create (POST), Read (GET), Update (PUT/PATCH) en Delete (DELETE).
+
+Een request body is de JSON die je meestuurt. **Pydantic** zet deze om naar een
+Python-object en controleert de velden. **SQLAlchemy** is de ORM: die koppelt
+Python-objecten aan relationele tabellen en voert de bijbehorende SQL uit.
+Een Pydantic-model controleert de API-invoer; een SQLAlchemy-model beschrijft de opslag.
+
+Bij POST `/players` gebeurt achtereenvolgens:
+
+1. FastAPI ontvangt de HTTP-request.
+2. Pydantic valideert username en score.
+3. `service.create_player` maakt een Player en een bijbehorende Score.
+4. SQLAlchemy maakt met INSERT de records aan.
+5. `session.commit()` slaat de transactie definitief op in SQLite.
+6. De API antwoordt met status 201 en een PlayerRead als JSON.
+
+Een **primary key** is de unieke id van een record. De **foreign key**
+`scores.player_id` verwijst naar `players.id`: één speler kan meerdere scores hebben.
+Een SQLite-bestand blijft op schijf bestaan na het stoppen van Python; een gewone
+Python-list in het geheugen niet. SELECT leest, INSERT voegt toe, UPDATE wijzigt,
+DELETE verwijdert. SQLAlchemy maakt deze statements voor de CRUD-functies.
+
+Lees de code en oefen deze uitleg zelf voor de beoordeling; werkende software
+bewijst niet automatisch dat je de leerdoelen kunt uitleggen.
+
+Bronnen: [FastAPI body updates](https://fastapi.tiangolo.com/tutorial/body-updates/),
+[SQLAlchemy ORM](https://docs.sqlalchemy.org/en/20/orm/quickstart.html),
+[SQLite-koppeling](https://docs.sqlalchemy.org/en/20/dialects/sqlite.html).
+
+## Tests en Git
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Daar kun je:
-1. Elk endpoint openklappen.
-2. Op "Try it out" klikken.
-3. (Eventueel) parameters invullen, zoals een speler-ID.
-4. Op "Execute" klikken om de echte response en statuscode te zien.
+Tests gebruiken tijdelijke databases en veranderen je eigen spelers niet.
+Zie `TESTVERSLAG.md` voor de resultaten.
 
-Test in elk geval:
-- `/players` → moet een lijst met alle spelers teruggeven (200 OK).
-- `/players/1` → moet één bestaande speler teruggeven (200 OK).
-- `/players/9999` → moet een 404-foutmelding teruggeven, omdat deze speler
-  niet bestaat.
-- `/leaderboard` → moet de spelers gesorteerd op score teruggeven, hoogste
-  score eerst.
-
-## Git: wijzigingen committen en pushen
-
-Werk in kleine, duidelijke commits, bijvoorbeeld:
-
-```bash
-git add api.py requirements.txt
-git commit -m "Basis FastAPI-app met test-endpoint toegevoegd"
-
-git add api.py
-git commit -m "GET /players endpoint toegevoegd"
-
-git add api.py
-git commit -m "GET /players/{id} endpoint met 404-afhandeling toegevoegd"
-
-git add api.py
-git commit -m "GET /leaderboard endpoint toegevoegd, gesorteerd op score"
-
-git add README.md
-git commit -m "README bijgewerkt met FastAPI-uitleg en instructies"
-
+```powershell
+git status
+git log --oneline
+git add .
+git commit -m "Beschrijf je wijziging"
 git push
 ```
 
-Zorg dat je repository al bestaat en gekoppeld is (zie eventueel de
-originele Sprint 1 `git init` / `git remote add origin ...`-stappen).
-
-## Definition of done - checklist
-
-- [ ] API bereikbaar via de browser (`http://127.0.0.1:8000`)
-- [ ] `GET /players` geeft alle spelers als JSON terug
-- [ ] `GET /players/{id}` geeft één specifieke speler terug
-- [ ] Niet-bestaande speler geeft een passende foutresponse (404 Not Found)
-- [ ] `GET /leaderboard` sorteert spelers correct van hoogste naar laagste
-      score
-- [ ] Minimaal drie zinvolle GET-endpoints aanwezig (`/players`,
-      `/players/{id}`, `/leaderboard`)
-- [ ] Endpoints te testen via Swagger UI (`/docs`)
-- [ ] Wijzigingen staan met meerdere duidelijke commits op GitHub
+De oorspronkelijke code staat in de eerste commit. De uitwerking, het ontwerp en
+de verificatie staan in afzonderlijke commits. `.venv`, databases en caches
+worden niet naar GitHub gestuurd.
