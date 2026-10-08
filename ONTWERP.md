@@ -64,3 +64,28 @@ Na de import gebruiken console en API dezelfde database.
 Test CRUD, scorekoppelingen, validatie, sortering, 404/409/422/400/204,
 eenmalige import, databasebeperkingen en herstart met een tijdelijk databasebestand.
 Controleer ook Swagger en de console zonder echte spelersdata te veranderen.
+
+## Projectstructuur (sprint 5)
+
+Voor de refactor stonden alle endpoints en de databasesessie in `api.py`.
+De businesslogica (`service.py`), opslag (`database.py`, `models.py`) en
+invoercontrole (`schemas.py`) waren al gescheiden. Daarom verplaatsen we alleen
+de HTTP-routes en gedeelde dependencies; een extra laag voor elke functie is niet nodig.
+
+- `api.py` maakt de applicatie, opent/sluit de database en koppelt de routers.
+- `routers/players.py` bevat de HTTP-acties voor spelers.
+- `routers/scores.py` bevat de HTTP-acties voor scores en scoregeschiedenis.
+- `routers/leaderboard.py` bevat het leaderboard-endpoint.
+- `dependencies.py` levert per request een databasesessie en valideert ids.
+- `service.py` voert CRUD en scoreberekeningen uit, ook voor het consolemenu.
+- `models.py` beschrijft tabellen, sleutels en relaties in SQLAlchemy.
+- `schemas.py` controleert requestgegevens en bepaalt de publieke responsevelden.
+
+Een router verwerkt HTTP, een service voert de actie uit en een model beschrijft
+de opslag. Dit is Separation of Concerns. Een Pydantic-schema is dus geen
+databasetabel. De routes importeren de gedeelde onderdelen, zonder dat de service
+van FastAPI afhankelijk wordt. Bestaande URL's en responses blijven hetzelfde.
+
+Nog zelf te doen: laat een klasgenoot de indeling bekijken, vraag of duidelijk
+is waar een nieuwe route thuishoort en geef ook feedback op diens API.
+Noteer de naam, datum en echte feedback; deze uitwisseling is nog niet uitgevoerd.
