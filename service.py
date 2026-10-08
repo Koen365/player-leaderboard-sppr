@@ -14,6 +14,10 @@ class DuplicateUsername(ValueError):
     pass
 
 
+class Forbidden(ValueError):
+    pass
+
+
 def get_player(session, player_id):
     player = session.get(Player, player_id)
     if player is None:
@@ -37,8 +41,8 @@ def commit_player(session):
         raise
 
 
-def create_player(session, data):
-    player = Player(username=data.username, username_key=data.username.casefold())
+def create_player(session, data, owner_id=None):
+    player = Player(username=data.username, username_key=data.username.casefold(), owner_id=owner_id)
     player.scores.append(Score(score=data.score))
     session.add(player)
     commit_player(session)
@@ -99,3 +103,16 @@ def update_score(session, score_id, data):
 def delete_score(session, score_id):
     session.delete(get_score(session, score_id))
     session.commit()
+
+
+def require_player_owner(session, player_id, user_id):
+    player = get_player(session, player_id)
+    if player.owner_id != user_id:
+        raise Forbidden("Je mag alleen je eigen spelers en scores wijzigen.")
+    return player
+
+
+def require_score_owner(session, score_id, user_id):
+    score = get_score(session, score_id)
+    require_player_owner(session, score.player_id, user_id)
+    return score

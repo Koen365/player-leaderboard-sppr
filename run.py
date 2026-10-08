@@ -24,6 +24,9 @@ def ensure_dependencies(script_path=None):
         import fastapi  # noqa: F401
         import sqlalchemy  # noqa: F401
         import uvicorn  # noqa: F401
+        import pwdlib  # noqa: F401
+        import argon2  # noqa: F401
+        import python_multipart  # noqa: F401
     except ImportError:
         subprocess.check_call([
             sys.executable, "-m", "pip", "install", "-r", str(PROJECT_DIR / "requirements.txt"),

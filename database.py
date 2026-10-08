@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 from pydantic import TypeAdapter, ValidationError
-from sqlalchemy import URL, create_engine, event, select
+from sqlalchemy import URL, create_engine, event, inspect, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from models import Base, Metadata, Player, Score
@@ -34,6 +34,14 @@ def make_engine(database_path=None):
 
 def initialize_database(engine, seed_file=PROJECT_DIR / "players.json"):
     Base.metadata.create_all(engine)
+    # Bestaande databases krijgen alleen een extra kolom; spelers blijven staan.
+    columns = {column["name"] for column in inspect(engine).get_columns("players")}
+    with engine.begin() as connection:
+        if "owner_id" not in columns:
+            connection.execute(text(
+                "ALTER TABLE players ADD COLUMN owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL"
+            ))
+        connection.execute(text("CREATE INDEX IF NOT EXISTS ix_players_owner_id ON players(owner_id)"))
     with Session(engine) as session, session.begin():
         if session.get(Metadata, "json_imported") is not None:
             return

@@ -8,6 +8,24 @@ class Base(DeclarativeBase):
     pass
 
 
+class User(Base):
+    __tablename__ = "users"
+    __table_args__ = {"sqlite_autoincrement": True}
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(String(50))
+    username_key: Mapped[str] = mapped_column(String(100), unique=True)
+    password_hash: Mapped[str] = mapped_column(String(255))
+
+
+class AccessSession(Base):
+    __tablename__ = "access_sessions"
+
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    expires_at: Mapped[int]
+
+
 class Player(Base):
     __tablename__ = "players"
     __table_args__ = (
@@ -18,6 +36,7 @@ class Player(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(50))
     username_key: Mapped[str] = mapped_column(String(100), unique=True)
+    owner_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), index=True)
     scores: Mapped[list["Score"]] = relationship(
         back_populates="player", cascade="all, delete-orphan",
         passive_deletes=True, order_by="Score.id", lazy="selectin",

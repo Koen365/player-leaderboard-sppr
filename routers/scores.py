@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Response
 
 import service
-from dependencies import DatabaseSession, ResourceId
+from dependencies import CurrentUser, DatabaseSession, ResourceId
 from schemas import ScoreCreate, ScoreRead
 
 
-router = APIRouter()
+router = APIRouter(responses={
+    401: {"description": "Niet ingelogd of sessie verlopen"},
+    403: {"description": "Je bent niet de eigenaar"},
+    404: {"description": "Speler of score niet gevonden"},
+})
 
 
 @router.get("/players/{player_id}/scores", response_model=list[ScoreRead], tags=["Scores"])
@@ -14,7 +18,9 @@ def player_scores(player_id: ResourceId, session: DatabaseSession):
 
 
 @router.post("/players/{player_id}/scores", response_model=ScoreRead, status_code=201, tags=["Scores"])
-def add_score(player_id: ResourceId, data: ScoreCreate, session: DatabaseSession, response: Response):
+def add_score(player_id: ResourceId, data: ScoreCreate, session: DatabaseSession, response: Response,
+              user: CurrentUser):
+    service.require_player_owner(session, player_id, user.id)
     score = service.create_score(session, player_id, data)
     response.headers["Location"] = f"/scores/{score.id}"
     return score
@@ -31,12 +37,14 @@ def get_score(score_id: ResourceId, session: DatabaseSession):
 
 
 @router.patch("/scores/{score_id}", response_model=ScoreRead, tags=["Scores"])
-def patch_score(score_id: ResourceId, data: ScoreCreate, session: DatabaseSession):
+def patch_score(score_id: ResourceId, data: ScoreCreate, session: DatabaseSession, user: CurrentUser):
     """Corrigeer een bestaande scoreregistratie."""
+    service.require_score_owner(session, score_id, user.id)
     return service.update_score(session, score_id, data)
 
 
 @router.delete("/scores/{score_id}", status_code=204, tags=["Scores"])
-def remove_score(score_id: ResourceId, session: DatabaseSession):
+def remove_score(score_id: ResourceId, session: DatabaseSession, user: CurrentUser):
+    service.require_score_owner(session, score_id, user.id)
     service.delete_score(session, score_id)
     return Response(status_code=204)
