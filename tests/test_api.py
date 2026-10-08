@@ -10,13 +10,9 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
 from api import create_app
+from assign_owner import assign_players
+from conftest import authenticate
 from database import initialize_database, make_engine
-
-
-@pytest.fixture
-def client(tmp_path):
-    with TestClient(create_app(tmp_path / "test.db", seed_file=None)) as client:
-        yield client
 
 
 def add(client, username="Testspeler", score=0):
@@ -139,9 +135,13 @@ def test_import_restart_and_no_resurrection(tmp_path):
     db = tmp_path / "persistent.db"
     with TestClient(create_app(db, seed)) as client:
         assert client.get("/players").json() == original
+        authenticate(client)
+        with client.app.state.session_factory() as session:
+            assign_players(session, "Tester", player_id=12)
         assert client.patch("/players/12", json={"score": 90}).status_code == 200
     # Nieuwe app en nieuwe verbindingen: de wijziging staat echt op schijf.
     with TestClient(create_app(db, seed)) as client:
+        authenticate(client)
         assert client.get("/players/12").json()["score"] == 90
         assert len(client.get("/players/12/scores").json()) == 2
         assert client.delete("/players/12").status_code == 204

@@ -1,4 +1,4 @@
-# Ontwerp voor sprint 3 en 4
+# Projectstructuur en database
 
 Gebaseerd op [het Trello-bord](https://trello.com/b/IEi2Nb14/sppr-fd-sd24).
 De bestaande consoleapp en GET-responses (id, username, score) blijven bruikbaar.
@@ -29,11 +29,25 @@ Een alternatieve database kan via PLAYER_DATABASE worden ingesteld.
 
 ```mermaid
 erDiagram
+    USERS ||--o{ PLAYERS : beheert
+    USERS ||--o{ ACCESS_SESSIONS : heeft
     PLAYERS ||--o{ SCORES : heeft
+    USERS {
+        integer id PK
+        string username
+        string username_key UK
+        string password_hash
+    }
+    ACCESS_SESSIONS {
+        string token_hash PK
+        integer user_id FK
+        integer expires_at
+    }
     PLAYERS {
         integer id PK
         string username
         string username_key UK
+        integer owner_id FK
     }
     SCORES {
         integer id PK
@@ -89,3 +103,65 @@ van FastAPI afhankelijk wordt. Bestaande URL's en responses blijven hetzelfde.
 Nog zelf te doen: laat een klasgenoot de indeling bekijken, vraag of duidelijk
 is waar een nieuwe route thuishoort en geef ook feedback op diens API.
 Noteer de naam, datum en echte feedback; deze uitwisseling is nog niet uitgevoerd.
+
+## Accounts en rechten (sprint 6)
+
+Authentication beantwoordt: wie doet dit verzoek? Authorization beantwoordt:
+mag deze gebruiker deze actie uitvoeren? Een geldig token is dus niet genoeg
+om de speler van iemand anders te mogen verwijderen.
+
+`routers/auth.py` handelt HTTP af. `auth_service.py` registreert accounts en
+beheert sessies. `security.py` bevat de hash- en tokenfuncties. De dependency
+`CurrentUser` bepaalt wie is ingelogd. De spelers- en scoreroutes controleren
+daarna het eigenaarschap via de service, voordat ze de wijziging uitvoeren.
+
+### Gekozen beveiliging
+
+- Wachtwoorden worden met Argon2id via `pwdlib` gehasht, met een willekeurige salt.
+  Alleen `password_hash` wordt opgeslagen. Hashes worden niet teruggestuurd.
+- Een login maakt een willekeurig token met 32 bytes toeval (256 bits).
+  Alleen de SHA-256-hash van dit token staat in `access_sessions`.
+- Dit is een server-side sessie met een opaque Bearer-token, geen JWT. Voor één
+  lokale API is dit eenvoudig te begrijpen en logout kan het token direct intrekken.
+- `expires_at` begrenst de geldigheid tot één uur. De hash, vervaltijd en het
+  bestaan van het account worden bij ieder beveiligd verzoek gecontroleerd.
+- OAuth2PasswordBearer en een formulier-login laten de Authorize-knop in Swagger
+  werken. Er is geen OAuth-provider of externe accountdienst nodig.
+- Invoerfouten bevatten geen teruggekaatste invoer, zodat een fout wachtwoord
+  ook niet in de JSON-foutmelding verschijnt. Tokenresponses zijn niet cachebaar.
+
+### Rechten
+
+| Actie | Toegang |
+|---|---|
+| GET spelers, scores en leaderboard | Iedereen; dit zijn openbare scoregegevens |
+| Registreren en inloggen | Iedereen |
+| GET /auth/me, POST /auth/logout | Geldige ingelogde gebruiker |
+| POST /players | Ingelogd; owner_id komt van het token |
+| PUT/PATCH/DELETE speler | Alleen de eigenaar |
+| POST score bij speler | Alleen de eigenaar van die speler |
+| PATCH/DELETE score | Alleen de eigenaar van de gekoppelde speler |
+
+Geen/ongeldig/verlopen token geeft 401 met `WWW-Authenticate: Bearer`.
+Een ingelogde niet-eigenaar krijgt 403. Een ontbrekend record geeft 404.
+De client kan `owner_id` niet meesturen of veranderen; extra velden worden geweigerd.
+Scorecontrole gaat ook via de bijbehorende speler, zodat een los score-id geen
+manier is om de rechten te omzeilen.
+
+### Bestaande gegevens en lokaal beheer
+
+De upgrade maakt `users` en `access_sessions` aan en voegt een nullable `owner_id`
+toe aan bestaande spelers. De ids, namen en scores worden behouden. De migratie
+kan bij elke start veilig opnieuw gecontroleerd worden.
+
+Oude spelers hebben geen eigenaar. De eerste registrant krijgt daar geen rechten
+op. Alleen iemand met lokale toegang kan met `assign_owner.py` een eigenaar koppelen.
+Het consolemenu blijft lokaal beheer en gebruikt rechtstreeks de service. Deze
+lokale toegang is dus vertrouwd, zoals het rechtstreeks openen van SQLite.
+
+De app start standaard alleen op 127.0.0.1. Het project is een lokale onderwijsdemo;
+publieke hosting vraagt daarnaast onder andere HTTPS en bescherming tegen veel
+loginpogingen. Dat is niet in deze twee sprintopdrachten uitgewerkt.
+
+Bronnen: [FastAPI-projectstructuur](https://fastapi.tiangolo.com/tutorial/bigger-applications/),
+[FastAPI-wachtwoordhashes en Bearer-authenticatie](https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/).

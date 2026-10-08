@@ -1,8 +1,10 @@
 # Game Score Manager — SPPR SD24
 
 Python-consoleapp en FastAPI REST API voor spelers, scores en een leaderboard.
-Uitgewerkt volgens sprint 1 t/m 4 van het [Trello-bord](https://trello.com/b/IEi2Nb14/sppr-fd-sd24).
+Technisch uitgewerkt tot en met sprint 6 van het [Trello-bord](https://trello.com/b/IEi2Nb14/sppr-fd-sd24).
 De API en het consolemenu delen een SQLite-database via SQLAlchemy.
+Er is geen spel gekoppeld; je voert de scores zelf in. Feedback met een klasgenoot
+uitwisselen en de code zelf kunnen uitleggen blijven onderdelen die je zelf doet.
 
 ## Starten
 
@@ -42,11 +44,52 @@ Op Linux/macOS is de interpreter `.venv/bin/python`.
 
 ## Wat kun je ermee?
 
+- Een account registreren, inloggen, je account bekijken en uitloggen.
 - Spelers toevoegen, bekijken, op id opvragen, hernoemen en verwijderen.
 - In het consolemenu ook zoeken op username.
 - Scores toevoegen, bekijken, corrigeren en verwijderen.
 - Een leaderboard bekijken, van hoogste naar laagste actuele score.
 - Gegevens behouden na afsluiten en opnieuw starten.
+
+Spelers en scores bekijken is openbaar. Toevoegen vereist een account; wijzigen
+en verwijderen mag via de API alleen voor je eigen spelers en hun scores.
+Het consolemenu blijft lokaal beheer voor degene met toegang tot de projectmap.
+
+## Inloggen in Swagger
+
+1. Start `python run.py` en open http://127.0.0.1:8000/docs.
+2. Open **Account > POST /auth/register > Try it out**. Kies een accountnaam en
+   een eigen wachtwoord van 10 tot 128 tekens. Klik op **Execute**: 201 is gelukt.
+3. Klik bovenaan op **Authorize**. Vul dezelfde username en password in.
+   Laat client_id en client_secret leeg. Klik op **Authorize** en **Close**.
+4. Voer **GET /auth/me** uit. Je ziet je account-id en naam.
+5. Nieuwe spelers die je via **POST /players** maakt worden aan dit account gekoppeld.
+6. Gebruik **POST /auth/logout** om het gebruikte token op de server in te trekken.
+   Klik daarna bij **Authorize > Logout** om het token ook uit Swagger te verwijderen.
+
+Een account is je login; een speler is een record met scores. De namen hoeven
+niet hetzelfde te zijn. Eén account kan meerdere spelers beheren.
+**POST /auth/login** verwacht formuliergegevens (`username`, `password`), geen JSON.
+Het antwoord bevat een Bearer-token dat één uur geldig is. Swagger stuurt dat
+na Authorize vanzelf mee in `Authorization: Bearer ...`.
+
+Zonder login krijg je bij wijzigingen **401**. Bij een speler van een ander
+account krijg je **403**. **404** betekent dat de speler of score niet bestaat.
+
+### Spelers uit de eerdere versie
+
+Bestaande spelers en scoregeschiedenis blijven bij de upgrade behouden. Ze
+hebben nog geen eigenaar; een nieuw account mag ze niet automatisch overnemen.
+Registreer eerst je eigen account. Koppel vervolgens in een lokale terminal
+de oude spelers aan dat account (vervang `MijnAccount` door je accountnaam):
+
+```powershell
+python assign_owner.py --user MijnAccount --all-unowned
+```
+
+Voor één speler: `python assign_owner.py --user MijnAccount --player-id 1`.
+Het commando weigert een speler die al bij een ander account hoort. Ook een
+nieuwe speler uit het lokale consolemenu kun je zo aan een account koppelen.
 
 De **laatst toegevoegde score** is de actuele score van een speler. Een nieuwe
 score vervangt de actuele waarde, maar bewaart de eerdere registraties.
@@ -59,6 +102,10 @@ Bij gelijke scores sorteert het leaderboard op speler-id.
 | Methode | Endpoint | Actie | Succes |
 |---|---|---|---|
 | GET | `/` | Status van de API | 200 |
+| POST | `/auth/register` | Account aanmaken | 201 |
+| POST | `/auth/login` | Inloggen, toegangstoken ontvangen | 200 |
+| GET | `/auth/me` | Ingelogd account opvragen | 200 |
+| POST | `/auth/logout` | Gebruikte sessie beëindigen | 204 |
 | GET | `/players` | Alle spelers | 200 |
 | POST | `/players` | Nieuwe speler | 201 |
 | GET | `/players/{player_id}` | Eén speler | 200 |
@@ -85,6 +132,8 @@ PATCH laat ontbrekende velden met rust; PUT verwacht zowel username als score.
 | Foutcode | Betekenis |
 |---|---|
 | 400 | Lege PATCH: geen velden om te wijzigen |
+| 401 | Login ontbreekt of toegang is ongeldig/verlopen |
+| 403 | Je bent niet de eigenaar van de speler of score |
 | 404 | Speler of score bestaat niet |
 | 409 | Username bestaat al |
 | 422 | Ongeldige invoer, ontbrekend verplicht veld of ongeldig id |
@@ -93,6 +142,7 @@ PATCH laat ontbrekende velden met rust; PUT verwacht zowel username als score.
 
 Open `/docs`, klap een endpoint open, klik **Try it out**, vul de gegevens in en
 klik **Execute**. Onder **Server response** staat de echte statuscode en JSON.
+Registreer en autoriseer eerst een account zoals hierboven beschreven.
 
 1. POST `/players` met `{"username":"MijnSpeler","score":100}`. Onthoud het teruggegeven id.
 2. GET `/players` en GET `/players/{player_id}` met dat id.
@@ -113,15 +163,21 @@ Gebruik hiervoor een eigen testspeler. De wijzigingsendpoints passen de database
 | Bestand | Verantwoordelijkheid |
 |---|---|
 | `main.py` | Consolemenu, invoer en foutmeldingen |
-| `api.py` | HTTP-endpoints, statuscodes, Swagger en sessie per request |
+| `api.py` | Applicatie opbouwen, routers koppelen en foutafhandeling |
+| `routers/` | Aparte routes voor accounts, spelers, scores en leaderboard |
+| `dependencies.py` | Databasesessie en ingelogde gebruiker per request |
 | `schemas.py` | Pydantic-modellen voor invoer en uitvoer |
 | `models.py` | SQLAlchemy-classes Player en Score met hun relatie |
 | `service.py` | CRUD-logica die console en API delen |
 | `database.py` | SQLite-verbinding, tabellen en JSON-import |
+| `auth_service.py` | Registratie, login, sessiecontrole en logout |
+| `security.py` | Argon2-wachtwoordhashes en toegangstokens |
+| `assign_owner.py` | Oude spelers lokaal aan een account koppelen |
 | `players.json` | Bestaande spelers als eenmalige importbron |
 | `players.db` | Actuele gegevens; lokaal en genegeerd door Git |
 | `ONTWERP.md` | Endpointkeuzes en databaseontwerp |
 | `tests/test_api.py` | Automatische functionele tests |
+| `tests/test_auth.py` | Login, rechten, hashes, verloop en database-upgrade testen |
 | `TESTVERSLAG.md` | Uitgevoerde controles en koppeling aan de sprints |
 
 Bij de eerste start worden de vier bestaande spelers geïmporteerd, inclusief
