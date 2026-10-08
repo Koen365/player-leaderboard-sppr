@@ -10,14 +10,15 @@ import venv
 PROJECT_DIR = Path(__file__).resolve().parent
 
 
-def ensure_dependencies():
+def ensure_dependencies(script_path=None):
     env_dir = PROJECT_DIR / ".venv"
     executable = env_dir / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     if not executable.exists():
         print("Virtuele Python-omgeving aanmaken...", flush=True)
         venv.create(env_dir, with_pip=True)
     if Path(sys.prefix).resolve() != env_dir.resolve():
-        result = subprocess.run([str(executable), str(Path(__file__).resolve()), *sys.argv[1:]])
+        script = Path(script_path or __file__).resolve()
+        result = subprocess.run([str(executable), str(script), *sys.argv[1:]])
         raise SystemExit(result.returncode)
     try:
         import fastapi  # noqa: F401

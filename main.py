@@ -1,4 +1,9 @@
-"""Het consolemenu uit sprint 1, nu met dezelfde database als de API."""
+
+
+# Gebruik eerst de projectomgeving met de benodigde pakketten.
+if __name__ == "__main__":
+    from run import ensure_dependencies
+    ensure_dependencies(__file__)
 
 from pydantic import ValidationError
 from sqlalchemy.exc import SQLAlchemyError
@@ -34,6 +39,7 @@ def change_score(session):
     while True:
         try:
             score = int(input(f"Nieuwe score voor {player.username}: "))
+            # Controleer of de score binnen het toegestane bereik valt.
             data = PlayerPatch(score=score)
             break
         except ValueError:
@@ -99,6 +105,7 @@ def main():
     except (ValueError, SQLAlchemyError) as error:
         print(f"Database kon niet worden geopend: {error}")
     finally:
+        # Sluit de databaseverbindingen ook af als er een fout optreedt.
         engine.dispose()
 
 

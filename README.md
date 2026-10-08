@@ -23,10 +23,11 @@ Afsluiten met Ctrl+C. Voor automatisch herladen: `python run.py --reload`.
 Is poort 8000 bezet, gebruik dan `python run.py --port 8001`.
 Je kunt ook dubbelklikken op `Start-API.cmd`.
 
-Voor het consolemenu, na installatie van de dependencies:
+Voor het consolemenu kun je dubbelklikken op `main.py` of `Start-Console.cmd`.
+De projectomgeving wordt automatisch gebruikt. Vanuit de terminal kan het ook:
 
 ```powershell
-.\.venv\Scripts\python.exe main.py
+python main.py
 ```
 
 Handmatige installatie, bijvoorbeeld na het klonen van GitHub:
