@@ -56,7 +56,8 @@ def update_player(session, player_id, data):
     if "username" in changes:
         player.username = changes["username"]
         player.username_key = player.username.casefold()
-    if "score" in changes:
+    # Een herhaalde PUT met dezelfde score mag geen extra registratie maken.
+    if "score" in changes and (not player.scores or changes["score"] != player.score):
         player.scores.append(Score(score=changes["score"]))
     commit_player(session)
     session.refresh(player)

@@ -1,0 +1,2546 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Player Leaderboard API",
+    "description": "Spelers en scoregeschiedenis blijven bewaard in SQLite. Lezen is openbaar. Registreer een account via /auth/register en log in met Authorize. Je kunt daarna spelers toevoegen en alleen je eigen spelers en scores wijzigen.",
+    "version": "3.1.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "tags": [
+          "Status"
+        ],
+        "summary": "Status opvragen",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Account registreren",
+        "description": "Maak een account met een wachtwoord van 10 tot 128 tekens.",
+        "operationId": "register_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Deze naam bestaat al (namen zijn niet hoofdlettergevoelig).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Deze naam bestaat al (namen zijn niet hoofdlettergevoelig)."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Inloggen",
+        "description": "Log in met formuliergegevens of gebruik de Authorize-knop bovenaan.",
+        "operationId": "login_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_login_auth_login_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Lege PATCH of onleesbaar verzoek.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Lege PATCH of onleesbaar verzoek."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen.",
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Mijn account bekijken",
+        "operationId": "me_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen.",
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen."
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "Account"
+        ],
+        "summary": "Uitloggen",
+        "description": "Trek het gebruikte token direct in; andere sessies blijven geldig.",
+        "operationId": "logout_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen.",
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen."
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/players": {
+      "get": {
+        "tags": [
+          "Players"
+        ],
+        "summary": "Alle spelers bekijken",
+        "operationId": "get_players_players_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlayerRead"
+                  },
+                  "type": "array",
+                  "title": "Response Get Players Players Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Players"
+        ],
+        "summary": "Speler toevoegen",
+        "operationId": "add_player_players_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayerCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "headers": {
+              "Location": {
+                "description": "Relatief pad naar het nieuwe record.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen.",
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen."
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Deze naam bestaat al (namen zijn niet hoofdlettergevoelig).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Deze naam bestaat al (namen zijn niet hoofdlettergevoelig)."
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/players/{player_id}": {
+      "get": {
+        "tags": [
+          "Players"
+        ],
+        "summary": "Speler opvragen",
+        "operationId": "get_player_players__player_id__get",
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 9223372036854775807,
+              "minimum": 1,
+              "title": "Player Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            }
+          },
+          "404": {
+            "description": "De speler of score bestaat niet.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "De speler of score bestaat niet."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Players"
+        ],
+        "summary": "Naam en score vervangen",
+        "description": "Vervang naam en actuele score; eerdere scores blijven in de geschiedenis.",
+        "operationId": "replace_player_players__player_id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 9223372036854775807,
+              "minimum": 1,
+              "title": "Player Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayerReplace"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            }
+          },
+          "401": {
+            "description": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            }
+          },
+          "403": {
+            "description": "Je mag alleen je eigen spelers en scores wijzigen.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Je mag alleen je eigen spelers en scores wijzigen."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "De speler of score bestaat niet.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "De speler of score bestaat niet."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Deze naam bestaat al (namen zijn niet hoofdlettergevoelig).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Deze naam bestaat al (namen zijn niet hoofdlettergevoelig)."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Players"
+        ],
+        "summary": "Speler gedeeltelijk wijzigen",
+        "description": "Wijzig alleen meegegeven velden. Een scorewijziging voegt een registratie toe.",
+        "operationId": "patch_player_players__player_id__patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 9223372036854775807,
+              "minimum": 1,
+              "title": "Player Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlayerPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlayerRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            }
+          },
+          "400": {
+            "description": "Lege PATCH of onleesbaar verzoek.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Lege PATCH of onleesbaar verzoek."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            }
+          },
+          "403": {
+            "description": "Je mag alleen je eigen spelers en scores wijzigen.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Je mag alleen je eigen spelers en scores wijzigen."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "De speler of score bestaat niet.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "De speler of score bestaat niet."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Deze naam bestaat al (namen zijn niet hoofdlettergevoelig).",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Deze naam bestaat al (namen zijn niet hoofdlettergevoelig)."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Players"
+        ],
+        "summary": "Speler en scores verwijderen",
+        "description": "Verwijder de speler en alle bijbehorende scores.",
+        "operationId": "remove_player_players__player_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 9223372036854775807,
+              "minimum": 1,
+              "title": "Player Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            }
+          },
+          "401": {
+            "description": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            }
+          },
+          "403": {
+            "description": "Je mag alleen je eigen spelers en scores wijzigen.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Je mag alleen je eigen spelers en scores wijzigen."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "De speler of score bestaat niet.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "De speler of score bestaat niet."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/players/{player_id}/scores": {
+      "get": {
+        "tags": [
+          "Scores"
+        ],
+        "summary": "Scoregeschiedenis bekijken",
+        "operationId": "player_scores_players__player_id__scores_get",
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 9223372036854775807,
+              "minimum": 1,
+              "title": "Player Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScoreRead"
+                  },
+                  "title": "Response Player Scores Players  Player Id  Scores Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            }
+          },
+          "404": {
+            "description": "De speler of score bestaat niet.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "De speler of score bestaat niet."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Scores"
+        ],
+        "summary": "Nieuwe score registreren",
+        "operationId": "add_score_players__player_id__scores_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "player_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 9223372036854775807,
+              "minimum": 1,
+              "title": "Player Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScoreCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreRead"
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "Relatief pad naar het nieuwe record.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            }
+          },
+          "401": {
+            "description": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            }
+          },
+          "403": {
+            "description": "Je mag alleen je eigen spelers en scores wijzigen.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Je mag alleen je eigen spelers en scores wijzigen."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "De speler of score bestaat niet.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "De speler of score bestaat niet."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scores": {
+      "get": {
+        "tags": [
+          "Scores"
+        ],
+        "summary": "Alle scores bekijken",
+        "operationId": "all_scores_scores_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ScoreRead"
+                  },
+                  "type": "array",
+                  "title": "Response All Scores Scores Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/scores/{score_id}": {
+      "get": {
+        "tags": [
+          "Scores"
+        ],
+        "summary": "Score opvragen",
+        "operationId": "get_score_scores__score_id__get",
+        "parameters": [
+          {
+            "name": "score_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 9223372036854775807,
+              "minimum": 1,
+              "title": "Score Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            }
+          },
+          "404": {
+            "description": "De speler of score bestaat niet.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "De speler of score bestaat niet."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Scores"
+        ],
+        "summary": "Bestaande score corrigeren",
+        "description": "Corrigeer een bestaande scoreregistratie.",
+        "operationId": "patch_score_scores__score_id__patch",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "score_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 9223372036854775807,
+              "minimum": 1,
+              "title": "Score Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScoreCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScoreRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            }
+          },
+          "401": {
+            "description": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            }
+          },
+          "403": {
+            "description": "Je mag alleen je eigen spelers en scores wijzigen.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Je mag alleen je eigen spelers en scores wijzigen."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "De speler of score bestaat niet.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "De speler of score bestaat niet."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Scores"
+        ],
+        "summary": "Score verwijderen",
+        "operationId": "remove_score_scores__score_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "score_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 9223372036854775807,
+              "minimum": 1,
+              "title": "Score Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            }
+          },
+          "401": {
+            "description": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Log in met Authorize; het token ontbreekt, is ongeldig of is verlopen."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "Bearer"
+              }
+            }
+          },
+          "403": {
+            "description": "Je mag alleen je eigen spelers en scores wijzigen.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "Je mag alleen je eigen spelers en scores wijzigen."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "De speler of score bestaat niet.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "detail": "De speler of score bestaat niet."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/leaderboard": {
+      "get": {
+        "tags": [
+          "Leaderboard"
+        ],
+        "summary": "Get Leaderboard",
+        "description": "Sorteer op actuele score, hoogste eerst; bij gelijkstand op speler-id.",
+        "operationId": "get_leaderboard_leaderboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlayerRead"
+                  },
+                  "type": "array",
+                  "title": "Response Get Leaderboard Leaderboard Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "detail": [
+                    {
+                      "loc": [
+                        "body",
+                        "score"
+                      ],
+                      "msg": "Input should be greater than or equal to 0",
+                      "type": "greater_than_equal"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Er ging iets mis op de server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Er ging iets mis op de server."
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database tijdelijk niet beschikbaar. Probeer later opnieuw.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "1"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "detail": "Database tijdelijk niet beschikbaar. Probeer later opnieuw."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_login_auth_login_post": {
+        "properties": {
+          "grant_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^password$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Type"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "title": "Password"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": ""
+          },
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "format": "password",
+            "title": "Client Secret"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_login_auth_login_post"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ErrorResponse"
+      },
+      "PlayerCreate": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Username",
+            "description": "Naam van 1 tot 50 tekens na trimmen; geen besturingstekens. Namen zijn uniek zonder hoofdletterverschil."
+          },
+          "score": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "description": "Geheel getal; geen tekst, boolean, kommagetal of null.",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "username"
+        ],
+        "title": "PlayerCreate",
+        "examples": [
+          {
+            "score": 100,
+            "username": "Nova"
+          }
+        ]
+      },
+      "PlayerPatch": {
+        "properties": {
+          "username": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50,
+                "minLength": 1,
+                "description": "Naam van 1 tot 50 tekens na trimmen; geen besturingstekens. Namen zijn uniek zonder hoofdletterverschil."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2147483647.0,
+                "minimum": 0.0,
+                "description": "Geheel getal; geen tekst, boolean, kommagetal of null."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PlayerPatch",
+        "examples": [
+          {
+            "score": 150
+          }
+        ]
+      },
+      "PlayerRead": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "score": {
+            "type": "integer",
+            "title": "Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "score"
+        ],
+        "title": "PlayerRead",
+        "examples": [
+          {
+            "id": 5,
+            "score": 100,
+            "username": "Nova"
+          }
+        ]
+      },
+      "PlayerReplace": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Username",
+            "description": "Naam van 1 tot 50 tekens na trimmen; geen besturingstekens. Namen zijn uniek zonder hoofdletterverschil."
+          },
+          "score": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "description": "Geheel getal; geen tekst, boolean, kommagetal of null."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "username",
+          "score"
+        ],
+        "title": "PlayerReplace",
+        "examples": [
+          {
+            "score": 200,
+            "username": "NovaNieuw"
+          }
+        ]
+      },
+      "ScoreCreate": {
+        "properties": {
+          "score": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "description": "Geheel getal; geen tekst, boolean, kommagetal of null."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "score"
+        ],
+        "title": "ScoreCreate",
+        "examples": [
+          {
+            "score": 300
+          }
+        ]
+      },
+      "ScoreRead": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "player_id": {
+            "type": "integer",
+            "title": "Player Id"
+          },
+          "score": {
+            "type": "integer",
+            "title": "Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "player_id",
+          "score"
+        ],
+        "title": "ScoreRead"
+      },
+      "StatusRead": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok",
+            "title": "Status"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "message"
+        ],
+        "title": "StatusRead"
+      },
+      "TokenRead": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "const": "bearer",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Geldigheidsduur in seconden (3600 = één uur)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "expires_in"
+        ],
+        "title": "TokenRead"
+      },
+      "UserCreate": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 1,
+            "title": "Username",
+            "description": "Naam van 1 tot 50 tekens na trimmen; geen besturingstekens. Namen zijn uniek zonder hoofdletterverschil."
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 10,
+            "format": "password",
+            "title": "Password",
+            "description": "Kies een eigen wachtwoord van 10 tot 128 tekens; dit wordt nooit teruggestuurd.",
+            "writeOnly": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "UserCreate",
+        "examples": [
+          {
+            "password": "Kies-een-eigen-wachtwoord",
+            "username": "MijnAccount"
+          }
+        ]
+      },
+      "UserRead": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username"
+        ],
+        "title": "UserRead"
+      },
+      "ValidationErrorResponse": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ValidationErrorResponse"
+      },
+      "ValidationIssue": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Loc"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Msg"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationIssue"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "auth/login"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Status",
+      "description": "Controleer of de API bereikbaar is."
+    },
+    {
+      "name": "Account",
+      "description": "Registreer eerst, gebruik dan Authorize. Een account kan meerdere spelers beheren."
+    },
+    {
+      "name": "Players",
+      "description": "Lezen is openbaar. Toevoegen vereist login; wijzigen en verwijderen vereisen eigenaarschap."
+    },
+    {
+      "name": "Scores",
+      "description": "Scorehistorie is openbaar. Wijzigen mag alleen voor de eigenaar van de gekoppelde speler."
+    },
+    {
+      "name": "Leaderboard",
+      "description": "Openbare ranglijst op de laatst toegevoegde score, niet de hoogste ooit."
+    }
+  ]
+}
