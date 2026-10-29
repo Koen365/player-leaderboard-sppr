@@ -1,4 +1,92 @@
-# Testverslag — 8 oktober 2026
+# Testverslag — 29 oktober 2026
+
+## Sprint 7 en 8: resultaat
+
+**89 automatische tests geslaagd** op Windows met Python 3.14.
+Uitgevoerd met `.venv\Scripts\python.exe -m pytest -q`.
+De eerdere 71 tests bleven slagen. Er zijn 16 fout- en regressiecontroles en
+2 contractcontroles toegevoegd. De contractflow controleert meerdere aanvragen.
+De twee bestaande deprecation-waarschuwingen uit Starlette/AnyIO blijven zichtbaar;
+ze zijn niet onderdrukt en veroorzaken geen testfout.
+
+## Gevonden problemen en regressietests
+
+De drie onderstaande tests zijn eerst op de oude code uitgevoerd: alle drie
+faalden. Na de reparatie slaagden ze. Dit waren eigen technische controles,
+geen controle door een klasgenoot.
+
+| Probleem | Voor reparatie | Na reparatie | Test in tests/test_errors.py |
+|---|---|---|---|
+| Naam met NUL-teken | Onverwerkte databasefout, 500 | 422, niets opgeslagen; volgende aanvraag werkt | test_null_character_in_name_returns_422 |
+| Wachtwoord met ongeldig Unicode-teken | Hashfunctie gaf een serverfout, 500 | 422, wachtwoord niet teruggestuurd | test_invalid_unicode_password_returns_422 |
+| Twee identieke PUTs | Scorehistorie werd 10,20,20 | Historie blijft 10,20; expliciete POST mag wel herhalen | test_repeated_put_does_not_duplicate_score_history |
+
+De naamcontrole weigert besturingstekens. Gewone Unicode-namen blijven toegestaan.
+Wachtwoorden worden op geldige UTF-8 controleerbaarheid getest voordat ze gehasht
+worden. De service voegt bij PUT/PATCH alleen een score toe als die verandert of
+als er nog geen score is.
+
+## Wat is getest en waarom?
+
+- **CRUD, opslag en scoregeschiedenis:** de kern van de app moet blijven werken.
+- **Authentication en eigenaarschap:** een verkeerde gebruiker mag geen data wijzigen.
+- **Verkeerde bodies en JSON:** een API-client kan andere invoer sturen dan Swagger.
+- **404 en 405:** verkeerde ids, routes en methoden moeten duidelijke fouten geven.
+- **Databasefout:** een nagebootste mislukte commit geeft 503 met Retry-After; de
+  sessie wordt gesloten zonder halve speler op te slaan. De volgende aanvraag werkt.
+- **Onverwachte fout:** een nagebootste interne fout geeft generieke JSON met 500;
+  de response bevat geen stacktrace, SQL, pad of wachtwoord. Daarna werkt de API weer.
+- **Unicode en SQL-achtige tekst:** geldige namen blijven data en worden niet als SQL uitgevoerd.
+- **Idempotente PUT:** opnieuw versturen mag geen onbedoelde scoreregistratie maken.
+- **OpenAPI-contract:** alle 18 operaties, successtatuscodes en loginplichten kloppen.
+- **Gedocumenteerde voorbeelden:** registratie, login, CRUD, rechten, foutgevallen en
+  logout zijn uitgevoerd; echte responses zijn met jsonschema tegen OpenAPI gevalideerd.
+- **Contractexport:** openapi.json komt exact overeen met de huidige API.
+
+De databasefout en onverwachte fout zijn doelbewust nagebootst met pytest monkeypatch.
+Dat test de foutafhandeling; het bewijst niet dat elk mogelijk schijf- of netwerkprobleem
+is nagebootst. Alle schrijftests gebruiken tijdelijke databases, niet players.db.
+
+## Zelf uitvoeren
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pytest -q
+python export_openapi.py --check
+```
+
+Eén regressietest bekijken:
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest tests/test_errors.py -k repeated_put -v
+```
+
+## Controle door een andere student
+
+Nog niet uitgevoerd. Laat een klasgenoot zonder mondelinge hulp de handleiding
+in docs/GEBRUIKEN.md doorlopen en proberen de API met foutieve requests te breken.
+Laat echte bevindingen invullen in docs/KLASGENOOT.md. Los relevante nieuw gevonden
+problemen op en voeg daar een regressietest voor toe. Dit onderdeel en het zelf
+kunnen uitleggen van het werk zijn nog nodig voor de volledige Trello-afronding.
+
+## Bronnen en hulpmiddelen
+
+- [pytest monkeypatch](https://docs.pytest.org/en/stable/how-to/monkeypatch.html):
+  fouten gecontroleerd nabootsen en de wijziging na de test herstellen.
+- [FastAPI-foutafhandeling](https://fastapi.tiangolo.com/tutorial/handling-errors/):
+  validatiefouten en eigen foutresponses afhandelen.
+- [FastAPI response-documentatie](https://fastapi.tiangolo.com/advanced/additional-responses/):
+  modellen en statuscodes in OpenAPI beschrijven.
+- pytest en FastAPI TestClient voeren aanvragen uit zonder een echte serverpoort.
+- jsonschema controleert responses aan de hand van het publieke schema.
+- AI is gebruikt bij analyse, implementatie, testgevallen en documentatie. De maker
+  moet de werking en gemaakte keuzes zelf kunnen toelichten.
+
+---
+
+## Eerdere controles tot en met sprint 6
+
+### Controle van 8 oktober 2026
 
 ## Resultaat
 

@@ -165,3 +165,24 @@ loginpogingen. Dat is niet in deze twee sprintopdrachten uitgewerkt.
 
 Bronnen: [FastAPI-projectstructuur](https://fastapi.tiangolo.com/tutorial/bigger-applications/),
 [FastAPI-wachtwoordhashes en Bearer-authenticatie](https://fastapi.tiangolo.com/tutorial/security/oauth2-jwt/).
+
+## Betrouwbaarheid en API-contract (sprint 7 en 8)
+
+`errors.py` handelt verwachte domeinfouten, invoerfouten en interne fouten op één
+plek af. De bestaande detail-string voor 400/401/403/404/409 blijft herkenbaar.
+Validatiefouten hebben een lijst met loc, msg en type, zonder teruggestuurde invoer.
+Een operationele databasefout geeft 503; andere interne fouten geven generieke JSON
+met 500. Het sluiten van de request-sessie draait niet-gecommitte werk terug.
+
+De nieuwe regressietests beschermen drie concrete reparaties: besturingstekens
+in namen, ongeldige Unicode in wachtwoorden en dubbele scorehistorie door een
+herhaalde PUT. Expliciet een score toevoegen met POST blijft een nieuwe registratie.
+
+`responses.py` koppelt foutmodellen, voorbeelden en headers aan de OpenAPI-documentatie.
+De routes documenteren alleen de loginplicht die ze daadwerkelijk hebben. Schemas
+bevatten bruikbare voorbeelden. `export_openapi.py` exporteert het contract zonder
+de database te openen; de contracttests bewaken de export én echte API-antwoorden.
+
+De README is de ingang. `docs/GEBRUIKEN.md` beschrijft de oefening voor een nieuwe
+gebruiker. `API_CONTRACT.md` beschrijft de afspraken voor een ontwikkelaar.
+`docs/KLASGENOOT.md` legt de nog uit te voeren onafhankelijke controle vast.
