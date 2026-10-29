@@ -27,7 +27,11 @@ def get_player(session, player_id):
 
 def list_players(session, leaderboard=False):
     players = list(session.scalars(select(Player).order_by(Player.id)))
-    return sorted(players, key=lambda player: (-player.score, player.id)) if leaderboard else players
+    return (
+        sorted(players, key=lambda player: (-player.score, player.id))
+        if leaderboard
+        else players
+    )
 
 
 def commit_player(session):
@@ -42,7 +46,9 @@ def commit_player(session):
 
 
 def create_player(session, data, owner_id=None):
-    player = Player(username=data.username, username_key=data.username.casefold(), owner_id=owner_id)
+    player = Player(
+        username=data.username, username_key=data.username.casefold(), owner_id=owner_id
+    )
     player.scores.append(Score(score=data.score))
     session.add(player)
     commit_player(session)

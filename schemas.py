@@ -3,20 +3,43 @@
 from typing import Annotated, Literal
 import unicodedata
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, SecretStr, StringConstraints, field_validator, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    SecretStr,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 
 def readable_username(value):
     if any(unicodedata.category(character) in {"Cc", "Cs"} for character in value):
-        raise ValueError("Een naam mag geen besturingstekens of ongeldige Unicode bevatten.")
+        raise ValueError(
+            "Een naam mag geen besturingstekens of ongeldige Unicode bevatten."
+        )
     return value
 
 
-Username = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50),
-                     AfterValidator(readable_username),
-                     Field(description="Naam van 1 tot 50 tekens na trimmen; geen besturingstekens. Namen zijn uniek zonder hoofdletterverschil.")]
-ScoreValue = Annotated[int, Field(strict=True, ge=0, le=2_147_483_647,
-                                  description="Geheel getal; geen tekst, boolean, kommagetal of null.")]
+Username = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=50),
+    AfterValidator(readable_username),
+    Field(
+        description="Naam van 1 tot 50 tekens na trimmen; geen besturingstekens. Namen zijn uniek zonder hoofdletterverschil."
+    ),
+]
+ScoreValue = Annotated[
+    int,
+    Field(
+        strict=True,
+        ge=0,
+        le=2_147_483_647,
+        description="Geheel getal; geen tekst, boolean, kommagetal of null.",
+    ),
+]
 
 
 class InputModel(BaseModel):
@@ -24,13 +47,17 @@ class InputModel(BaseModel):
 
 
 class PlayerCreate(InputModel):
-    model_config = ConfigDict(json_schema_extra={"examples": [{"username": "Nova", "score": 100}]})
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [{"username": "Nova", "score": 100}]}
+    )
     username: Username
     score: ScoreValue = 0
 
 
 class PlayerReplace(InputModel):
-    model_config = ConfigDict(json_schema_extra={"examples": [{"username": "NovaNieuw", "score": 200}]})
+    model_config = ConfigDict(
+        json_schema_extra={"examples": [{"username": "NovaNieuw", "score": 200}]}
+    )
     username: Username
     score: ScoreValue
 
@@ -49,8 +76,10 @@ class PlayerPatch(InputModel):
 
 
 class PlayerRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True, json_schema_extra={
-        "examples": [{"id": 5, "username": "Nova", "score": 100}]})
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={"examples": [{"id": 5, "username": "Nova", "score": 100}]},
+    )
     id: int
     username: str
     score: int
@@ -73,11 +102,19 @@ class LegacyPlayer(PlayerCreate):
 
 
 class UserCreate(InputModel):
-    model_config = ConfigDict(json_schema_extra={"examples": [
-        {"username": "MijnAccount", "password": "Kies-een-eigen-wachtwoord"}]})
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"username": "MijnAccount", "password": "Kies-een-eigen-wachtwoord"}
+            ]
+        }
+    )
     username: Username
-    password: SecretStr = Field(min_length=10, max_length=128,
-                                description="Kies een eigen wachtwoord van 10 tot 128 tekens; dit wordt nooit teruggestuurd.")
+    password: SecretStr = Field(
+        min_length=10,
+        max_length=128,
+        description="Kies een eigen wachtwoord van 10 tot 128 tekens; dit wordt nooit teruggestuurd.",
+    )
 
     @field_validator("password")
     @classmethod

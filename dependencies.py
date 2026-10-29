@@ -15,6 +15,7 @@ BearerToken = Annotated[str, Depends(oauth2_scheme)]
 
 
 def get_session(request: Request):
+    # FastAPI sluit deze sessie na het verzoek, ook als er een fout optreedt.
     with request.app.state.session_factory() as session:
         yield session
 

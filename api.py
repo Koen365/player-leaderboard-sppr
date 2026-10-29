@@ -23,14 +23,28 @@ def create_app(database_path=None, seed_file=PROJECT_DIR / "players.json"):
             engine.dispose()
 
     application = FastAPI(
-        title="Player Leaderboard API", version="3.1.0", lifespan=lifespan,
+        title="Player Leaderboard API",
+        version="3.1.0",
+        lifespan=lifespan,
         responses={422: VALIDATION_RESPONSE, **error_responses(500, 503)},
         openapi_tags=[
             {"name": "Status", "description": "Controleer of de API bereikbaar is."},
-            {"name": "Account", "description": "Registreer eerst, gebruik dan Authorize. Een account kan meerdere spelers beheren."},
-            {"name": "Players", "description": "Lezen is openbaar. Toevoegen vereist login; wijzigen en verwijderen vereisen eigenaarschap."},
-            {"name": "Scores", "description": "Scorehistorie is openbaar. Wijzigen mag alleen voor de eigenaar van de gekoppelde speler."},
-            {"name": "Leaderboard", "description": "Openbare ranglijst op de laatst toegevoegde score, niet de hoogste ooit."},
+            {
+                "name": "Account",
+                "description": "Registreer eerst, gebruik dan Authorize. Een account kan meerdere spelers beheren.",
+            },
+            {
+                "name": "Players",
+                "description": "Lezen is openbaar. Toevoegen vereist login; wijzigen en verwijderen vereisen eigenaarschap.",
+            },
+            {
+                "name": "Scores",
+                "description": "Scorehistorie is openbaar. Wijzigen mag alleen voor de eigenaar van de gekoppelde speler.",
+            },
+            {
+                "name": "Leaderboard",
+                "description": "Openbare ranglijst op de laatst toegevoegde score, niet de hoogste ooit.",
+            },
         ],
         description=(
             "Spelers en scoregeschiedenis blijven bewaard in SQLite. Lezen is openbaar. "
@@ -39,7 +53,9 @@ def create_app(database_path=None, seed_file=PROJECT_DIR / "players.json"):
         ),
     )
 
-    @application.get("/", tags=["Status"], response_model=StatusRead, summary="Status opvragen")
+    @application.get(
+        "/", tags=["Status"], response_model=StatusRead, summary="Status opvragen"
+    )
     def root():
         return {"status": "ok", "message": "De Player Leaderboard API draait!"}
 

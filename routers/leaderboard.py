@@ -4,7 +4,6 @@ import service
 from dependencies import DatabaseSession
 from schemas import PlayerRead
 
-
 router = APIRouter()
 
 

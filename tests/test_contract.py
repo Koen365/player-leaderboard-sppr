@@ -3,7 +3,6 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-
 # Dit is het publieke contract: methode, pad, succescode en loginplicht.
 OPERATIONS = [
     ("get", "/", 200, False),
@@ -28,9 +27,15 @@ OPERATIONS = [
 
 
 def test_exported_contract_matches_live_api(anonymous_client):
-    contract = json.loads((Path(__file__).resolve().parents[1] / "openapi.json").read_text(encoding="utf-8"))
+    contract = json.loads(
+        (Path(__file__).resolve().parents[1] / "openapi.json").read_text(
+            encoding="utf-8"
+        )
+    )
     assert contract == anonymous_client.get("/openapi.json").json()
-    assert sum(len(methods) for methods in contract["paths"].values()) == len(OPERATIONS)
+    assert sum(len(methods) for methods in contract["paths"].values()) == len(
+        OPERATIONS
+    )
     for method, path, status, protected in OPERATIONS:
         operation = contract["paths"][path][method]
         assert str(status) in operation["responses"]
@@ -39,7 +44,9 @@ def test_exported_contract_matches_live_api(anonymous_client):
         if status == 204:
             assert "content" not in operation["responses"]["204"]
         if protected:
-            assert operation["responses"]["401"]["content"]["application/json"]["schema"]
+            assert operation["responses"]["401"]["content"]["application/json"][
+                "schema"
+            ]
         elif method == "get":
             assert "401" not in operation["responses"]
     invalid = contract["components"]["schemas"]["ValidationIssue"]["properties"]
@@ -60,7 +67,10 @@ def test_documented_examples_and_full_student_flow(anonymous_client):
         if expected == 204:
             assert response.content == b""
         else:
-            schema = {"components": contract["components"], **documented["content"]["application/json"]["schema"]}
+            schema = {
+                "components": contract["components"],
+                **documented["content"]["application/json"]["schema"],
+            }
             Draft202012Validator(schema).validate(response.json())
         return response
 
@@ -81,11 +91,21 @@ def test_documented_examples_and_full_student_flow(anonymous_client):
     assert path == f"/players/{created.json()['id']}"
     request("get", "/players/{player_id}", 200, path=path)
     request("post", "/players", 409, json=body)
-    request("patch", "/players/{player_id}", 200, path=path, json=example("PlayerPatch"))
-    request("put", "/players/{player_id}", 200, path=path, json=example("PlayerReplace"))
+    request(
+        "patch", "/players/{player_id}", 200, path=path, json=example("PlayerPatch")
+    )
+    request(
+        "put", "/players/{player_id}", 200, path=path, json=example("PlayerReplace")
+    )
     request("patch", "/players/{player_id}", 400, path=path, json={})
     request("patch", "/players/{player_id}", 422, path=path, json={"score": -1})
-    score = request("post", "/players/{player_id}/scores", 201, path=path + "/scores", json=example("ScoreCreate"))
+    score = request(
+        "post",
+        "/players/{player_id}/scores",
+        201,
+        path=path + "/scores",
+        json=example("ScoreCreate"),
+    )
     score_path = score.headers["Location"]
     request("get", "/players/{player_id}/scores", 200, path=path + "/scores")
     request("get", "/scores", 200)
@@ -96,8 +116,14 @@ def test_documented_examples_and_full_student_flow(anonymous_client):
     other = {**account, "username": "AndereGebruiker"}
     request("post", "/auth/register", 201, json=other)
     other_token = request("post", "/auth/login", 200, data=other).json()["access_token"]
-    request("patch", "/players/{player_id}", 403, path=path, json={"score": 900},
-            headers={"Authorization": "Bearer " + other_token})
+    request(
+        "patch",
+        "/players/{player_id}",
+        403,
+        path=path,
+        json={"score": 900},
+        headers={"Authorization": "Bearer " + other_token},
+    )
     request("delete", "/scores/{score_id}", 204, path=score_path)
     request("get", "/scores/{score_id}", 404, path=score_path)
     request("delete", "/players/{player_id}", 204, path=path)

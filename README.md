@@ -81,6 +81,24 @@ van tests staan in **[TESTVERSLAG.md](TESTVERSLAG.md)**.
 
 ## Documentatie en bestanden
 
+Voor een code-review kun je deze volgorde aanhouden:
+
+1. `api.py`: start de API en koppelt de routes.
+2. `routers/players.py`: ontvangt een verzoek en controleert wie iets mag wijzigen.
+3. `schemas.py`: bepaalt welke invoer en antwoorden zijn toegestaan.
+4. `service.py`: voert de acties op spelers en scores uit.
+5. `models.py` en `database.py`: beschrijven de tabellen en regelen de opslag.
+6. `routers/auth.py`, `auth_service.py` en `security.py`: regelen inloggen en tokens.
+7. `tests/`: laat zien welk gedrag automatisch wordt gecontroleerd.
+
+Een voorbeeld om te volgen is **POST /players**: FastAPI controleert de invoer
+met `PlayerCreate` en haalt via `CurrentUser` de ingelogde gebruiker op.
+De route roept `service.create_player` aan, die de speler met een eigenaar
+opslaat. `PlayerRead` bepaalt welke velden in het antwoord terugkomen.
+
+Beide reviewers vullen afzonderlijk [het reviewformulier](docs/KLASGENOOT.md)
+in. Bekijk naast de code ook het gedrag in Swagger.
+
 | Bestand | Waarvoor? |
 |---|---|
 | [docs/GEBRUIKEN.md](docs/GEBRUIKEN.md) | Zelfstandig registreren, inloggen en CRUD proberen |

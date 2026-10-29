@@ -2,6 +2,7 @@
 
 if __name__ == "__main__":
     from run import ensure_dependencies
+
     ensure_dependencies(__file__)
 
 import argparse
@@ -13,7 +14,9 @@ from models import Player, User
 
 
 def assign_players(session, username, player_id=None, all_unowned=False):
-    user = session.scalar(select(User).where(User.username_key == username.strip().casefold()))
+    user = session.scalar(
+        select(User).where(User.username_key == username.strip().casefold())
+    )
     if user is None:
         raise ValueError("Registreer dit account eerst via /auth/register.")
     if all_unowned:
@@ -32,7 +35,9 @@ def assign_players(session, username, player_id=None, all_unowned=False):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Koppel bestaande spelers aan een account")
+    parser = argparse.ArgumentParser(
+        description="Koppel bestaande spelers aan een account"
+    )
     parser.add_argument("--user", required=True, help="Accountnaam, niet de spelernaam")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--player-id", type=int)

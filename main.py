@@ -1,8 +1,7 @@
-
-
 # Gebruik eerst de projectomgeving met de benodigde pakketten.
 if __name__ == "__main__":
     from run import ensure_dependencies
+
     ensure_dependencies(__file__)
 
 from pydantic import ValidationError
@@ -99,7 +98,9 @@ def main():
                 except (service.NotFound, service.DuplicateUsername) as error:
                     print(error)
                 except SQLAlchemyError:
-                    print("Databasebewerking mislukt. Controleer of het bestand schrijfbaar is.")
+                    print(
+                        "Databasebewerking mislukt. Controleer of het bestand schrijfbaar is."
+                    )
     except (EOFError, KeyboardInterrupt):
         print("\nProgramma afgesloten. Eerdere wijzigingen zijn opgeslagen.")
     except (ValueError, SQLAlchemyError) as error:

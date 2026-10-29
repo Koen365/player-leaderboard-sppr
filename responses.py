@@ -19,22 +19,42 @@ def error_responses(*codes):
         responses[code] = {
             "model": ErrorResponse,
             "description": DESCRIPTIONS[code],
-            "content": {"application/json": {"example": {"detail": DESCRIPTIONS[code]}}},
+            "content": {
+                "application/json": {"example": {"detail": DESCRIPTIONS[code]}}
+            },
         }
         if code == 401:
-            responses[code]["headers"] = {"WWW-Authenticate": {"schema": {"type": "string"}, "example": "Bearer"}}
+            responses[code]["headers"] = {
+                "WWW-Authenticate": {"schema": {"type": "string"}, "example": "Bearer"}
+            }
         if code == 503:
-            responses[code]["headers"] = {"Retry-After": {"schema": {"type": "string"}, "example": "1"}}
+            responses[code]["headers"] = {
+                "Retry-After": {"schema": {"type": "string"}, "example": "1"}
+            }
     return responses
 
 
 VALIDATION_RESPONSE = {
     "model": ValidationErrorResponse,
     "description": "Ongeldige invoer. loc wijst het veld aan; msg en type leggen de fout uit.",
-    "content": {"application/json": {"example": {"detail": [
-        {"loc": ["body", "score"], "msg": "Input should be greater than or equal to 0", "type": "greater_than_equal"}
-    ]}}},
+    "content": {
+        "application/json": {
+            "example": {
+                "detail": [
+                    {
+                        "loc": ["body", "score"],
+                        "msg": "Input should be greater than or equal to 0",
+                        "type": "greater_than_equal",
+                    }
+                ]
+            }
+        }
+    },
 }
 
-CREATED_LOCATION = {"Location": {"description": "Relatief pad naar het nieuwe record.",
-                                  "schema": {"type": "string"}}}
+CREATED_LOCATION = {
+    "Location": {
+        "description": "Relatief pad naar het nieuwe record.",
+        "schema": {"type": "string"},
+    }
+}

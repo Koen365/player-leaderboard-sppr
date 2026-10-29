@@ -1,15 +1,46 @@
-# Controle door een klasgenoot
+# Peer review
 
 Status: **nog niet uitgevoerd door een andere student**. Automatische tests
 vervangen deze controle niet. Vul alleen echte bevindingen in.
 
-Naam tester:
-Datum:
-Geteste Git-commit:
-Python-versie:
+| Gegeven | Invullen |
+|---|---|
+| Naam tester | |
+| Reviewer | 1 / 2 |
+| Datum | |
+| Geteste Git-commit | |
+| Python-versie | |
 
 Gebruik een eigen projectkopie en oefendatabase volgens [GEBRUIKEN.md](GEBRUIKEN.md).
 Probeer de stappen zonder mondelinge hulp van de maker uit te voeren.
+Beide klasgenoten gebruiken een eigen kopie van dit formulier en beoordelen
+dezelfde Git-commit. Vul de feedback eerst afzonderlijk in en bespreek die daarna.
+
+## Code lezen
+
+De leesvolgorde staat in [README.md](../README.md#documentatie-en-bestanden).
+Volg bijvoorbeeld het toevoegen van een speler vanaf de route tot aan de database.
+
+- [ ] Namen van bestanden, functies en variabelen zijn begrijpelijk.
+- [ ] Functies hebben een duidelijke taak en zijn goed te volgen.
+- [ ] Routes, invoercontrole en databaselogica zijn logisch verdeeld.
+- [ ] Opmerkingen helpen bij lastige stukken zonder elke regel te herhalen.
+- [ ] Ongeldige invoer en ontbrekende rechten worden afgehandeld.
+- [ ] De tests controleren zowel geslaagde acties als fouten.
+
+Noteer concrete voorbeelden, ook als iets goed is opgelost.
+
+| Bestand en functie | Wat valt op? | Waarom? | Voorstel |
+|---|---|---|---|
+| | | | |
+| | | | |
+| | | | |
+
+Wat is duidelijk of goed opgelost?
+
+Welk verbeterpunt heeft volgens jou de meeste prioriteit?
+
+Welke vraag wil je aan de maker stellen?
 
 ## Zelfstandig gebruiken (sprint 8)
 
